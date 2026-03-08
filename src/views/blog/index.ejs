@@ -1,0 +1,11 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container">
+  <h1>Blog</h1>
+  <div class="cards">
+    <% posts.forEach(post => { %>
+      <article class="card"><h3><a href="/blog/<%= post.slug %>"><%= post.title %></a></h3><p><%= post.excerpt %></p></article>
+    <% }) %>
+  </div>
+</main>
+<%- include('../partials/footer') %>

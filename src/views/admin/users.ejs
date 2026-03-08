@@ -1,0 +1,4 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container"><h1>User Management</h1><table><tr><th>Email</th><th>Name</th><th>Status</th></tr><% users.forEach(u => { %><tr><td><%= u.email %></td><td><%= u.profile?.fullName %></td><td><%= u.status %></td></tr><% }) %></table></main>
+<%- include('../partials/footer') %>

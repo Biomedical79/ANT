@@ -1,0 +1,85 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container reading-wizard-page">
+  <header class="wizard-header">
+    <h1>New Reading Wizard</h1>
+    <p>Upload cup images or capture live snapshots from your smartphone camera for better symbolic analysis quality.</p>
+  </header>
+
+  <form method="post" action="/readings/draft" enctype="multipart/form-data" id="readingWizard" class="wizard-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <fieldset data-step="1" class="wizard-step">
+      <legend>Step 1: Cup & Saucer Images</legend>
+
+      <div class="step-grid">
+        <section class="card upload-card" aria-labelledby="uploadFromGalleryTitle">
+          <h2 id="uploadFromGalleryTitle">Upload from gallery</h2>
+          <p>Upload 1–3 cup interior images and optional saucer image (JPG, PNG, WEBP up to 10MB each).</p>
+          <label class="file-input-label">
+            <span>Select images</span>
+            <input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple />
+          </label>
+          <div id="dropzone" class="dropzone" aria-live="polite">Drag & drop photos here</div>
+        </section>
+
+        <section class="card camera-card" aria-labelledby="liveCameraTitle">
+          <h2 id="liveCameraTitle">Live camera capture</h2>
+          <p>Use your iPhone or smartphone camera directly for real-time snapshots.</p>
+
+          <div class="camera-actions">
+            <button type="button" class="btn btn-outline" id="startCameraBtn">Start camera</button>
+            <button type="button" class="btn btn-outline" id="switchCameraBtn" disabled>Switch camera</button>
+            <button type="button" class="btn" id="takeSnapshotBtn" disabled>Take snapshot</button>
+            <button type="button" class="btn btn-outline" id="stopCameraBtn" disabled>Stop camera</button>
+          </div>
+
+          <video id="cameraPreview" class="camera-preview" playsinline muted aria-label="Live camera preview"></video>
+          <canvas id="cameraCanvas" class="hidden-canvas" aria-hidden="true"></canvas>
+          <p id="cameraStatus" class="microcopy" aria-live="polite">Camera is off.</p>
+
+          <label class="capture-fallback">
+            Quick mobile capture fallback
+            <input id="captureFallbackInput" type="file" accept="image/*" capture="environment" />
+          </label>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="selectedImagesTitle">
+        <h2 id="selectedImagesTitle">Selected images</h2>
+        <p class="microcopy">Reorder and remove images before submit (up to 4 total including snapshots).</p>
+        <ul id="imagePreviewList" class="preview-list" aria-live="polite"></ul>
+      </section>
+    </fieldset>
+
+    <fieldset data-step="2" class="wizard-step">
+      <legend>Step 2: Personal Details</legend>
+      <label>Full Name<input name="personalDetails[fullName]" required /></label>
+      <label>Birth Date<input type="date" name="personalDetails[birthDate]" required /></label>
+      <label>Gender (optional)<input name="personalDetails[gender]" /></label>
+      <label>Country (optional)<input name="personalDetails[country]" /></label>
+      <label>Language<select name="language"><option value="ar">Arabic</option><option value="en">English</option></select></label>
+    </fieldset>
+
+    <fieldset data-step="3" class="wizard-step">
+      <legend>Step 3: Reading Preferences</legend>
+      <label><input type="checkbox" name="selectedModes[]" value="arabic" checked />Arabic-style reading</label>
+      <label><input type="checkbox" name="selectedModes[]" value="oriental" checked />Oriental symbolic reading</label>
+      <label><input type="checkbox" name="selectedModes[]" value="tarot" />Tarot-style overlay</label>
+      <label><input type="checkbox" name="selectedModes[]" value="horoscope" />Horoscope-style overlay</label>
+      <label>Question Category<select name="questionCategory"><option>love</option><option>work</option><option>money</option><option>travel</option><option>family</option><option selected>general</option></select></label>
+      <label>Tone<select name="tone"><option>gentle</option><option>deep</option><option>practical</option><option>poetic</option></select></label>
+    </fieldset>
+
+    <fieldset data-step="4" class="wizard-step">
+      <legend>Step 4: Checkout & Consent</legend>
+      <label>Promo code<input name="promoCode" /></label>
+      <label><input type="checkbox" required /> I accept the entertainment disclaimer</label>
+      <label><input type="checkbox" required /> I consent to the privacy policy</label>
+      <label><input type="checkbox" required /> I confirm age 18+</label>
+    </fieldset>
+
+    <button class="btn" type="submit">Submit Reading</button>
+  </form>
+</main>
+<%- include('../partials/footer') %>

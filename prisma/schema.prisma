@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  DELETED
+}
+
+enum ReadingStatus {
+  DRAFT
+  QUEUED
+  ANALYZING
+  GENERATING
+  FINALIZING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model User {
+  id                String          @id @default(cuid())
+  email             String          @unique
+  passwordHash      String?
+  status            UserStatus      @default(PENDING)
+  emailVerifiedAt   DateTime?
+  preferredLanguage String          @default("ar")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+  profile           Profile?
+  roles             UserRole[]
+  readings          Reading[]
+  subscriptions     Subscription[]
+  payments          Payment[]
+  invoices          Invoice[]
+  notifications     Notification[]
+  supportTickets    SupportTicket[]
+  sessions          Session[]
+  referralsAsOwner  Referral[]      @relation("owner")
+  referralsAsInvite Referral[]      @relation("invitee")
+  testimonials      Testimonial[]
+  auditLogs         AuditLog[]
+}
+
+model Profile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  fullName   String
+  birthDate  DateTime?
+  gender     String?
+  country    String?
+  phone      String?
+  newsletter Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  label       String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id        String           @id @default(cuid())
+  key       String           @unique
+  label     String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  roles     RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id])
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+model Reading {
+  id                 String         @id @default(cuid())
+  userId             String?
+  guestEmail         String?
+  status             ReadingStatus  @default(DRAFT)
+  language           String         @default("ar")
+  questionCategory   String         @default("general")
+  selectedModes      String[]
+  tone               String         @default("gentle")
+  personalDetails    Json
+  aiStructuredResult Json?
+  isFavorite         Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  deletedAt          DateTime?
+  user               User?          @relation(fields: [userId], references: [id])
+  images             ReadingImage[]
+  result             ReadingResult?
+  payments           Payment[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model ReadingImage {
+  id         String   @id @default(cuid())
+  readingId  String
+  filePath   String
+  fileType   String
+  fileSize   Int
+  sortOrder  Int      @default(0)
+  isSaucer   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  reading    Reading  @relation(fields: [readingId], references: [id])
+
+  @@index([readingId, sortOrder])
+}
+
+model ReadingResult {
+  id        String           @id @default(cuid())
+  readingId String           @unique
+  summary   String
+  payload   Json
+  createdAt DateTime         @default(now())
+  sections  ReadingSection[]
+  reading   Reading          @relation(fields: [readingId], references: [id])
+}
+
+model ReadingSection {
+  id        String        @id @default(cuid())
+  resultId  String
+  key       String
+  title     String
+  content   String
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  result    ReadingResult @relation(fields: [resultId], references: [id])
+
+  @@index([resultId, sortOrder])
+}
+
+model Plan {
+  id          String         @id @default(cuid())
+  key         String         @unique
+  name        String
+  priceCents  Int
+  currency    String         @default("USD")
+  interval    String         @default("once")
+  features    Json
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id               String   @id @default(cuid())
+  userId           String
+  planId           String
+  status           String   @default("active")
+  currentPeriodEnd DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id])
+  plan             Plan     @relation(fields: [planId], references: [id])
+
+  @@index([userId, status])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  userId      String?
+  readingId   String?
+  amountCents Int
+  currency    String        @default("USD")
+  status      PaymentStatus @default(PENDING)
+  providerRef String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User?         @relation(fields: [userId], references: [id])
+  reading     Reading?      @relation(fields: [readingId], references: [id])
+  invoice     Invoice?
+}
+
+model Invoice {
+  id         String   @id @default(cuid())
+  userId     String
+  paymentId  String   @unique
+  number     String   @unique
+  lineItems  Json
+  totalCents Int
+  issuedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  payment    Payment  @relation(fields: [paymentId], references: [id])
+}
+
+model Coupon {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  discountType   String
+  discountValue  Int
+  maxRedemptions Int?
+  redeemedCount  Int      @default(0)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  ownerUserId    String
+  invitedUserId  String?
+  code           String   @unique
+  status         String   @default("pending")
+  rewardMetadata Json?
+  createdAt      DateTime @default(now())
+  owner          User     @relation("owner", fields: [ownerUserId], references: [id])
+  invitee        User?    @relation("invitee", fields: [invitedUserId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+}
+
+model SupportTicket {
+  id        String       @id @default(cuid())
+  userId    String
+  subject   String
+  message   String
+  status    TicketStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id])
+}
+
+model PromptTemplate {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  language      String
+  tone          String
+  templateBody  String
+  sectionOrder  Json
+  isActive      Boolean  @default(true)
+  disclaimer    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String
+  contentHtml String
+  language    String   @default("ar")
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  userId    String?
+  author    String
+  quote     String
+  rating    Int      @default(5)
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  user         User     @relation(fields: [userId], references: [id])
+}

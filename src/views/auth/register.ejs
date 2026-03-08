@@ -1,0 +1,14 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container auth-card">
+  <h1>Register</h1>
+  <form method="post" action="/auth/register">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Full Name<input name="fullName" required /></label>
+    <label>Email<input name="email" type="email" required /></label>
+    <label>Password<input name="password" type="password" required minlength="8" /></label>
+    <label>Language<select name="language"><option value="ar">Arabic</option><option value="en">English</option></select></label>
+    <button class="btn" type="submit">Create account</button>
+  </form>
+</main>
+<%- include('../partials/footer') %>
