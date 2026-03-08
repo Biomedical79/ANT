@@ -159,6 +159,7 @@
     .footer-actions { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap; }
     .analysis-grid { display:grid; gap:.6rem; }
     .analysis-block { background:#fff; border:1px solid #ead9c4; border-radius:10px; padding:.6rem; }
+    .long-report { margin:0; padding-left: 1.2rem; display:grid; gap:.35rem; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -248,6 +249,8 @@
       <section class="step">
         <legend data-i18n="analysisOutputTitle">Generated symbolic analysis</legend>
         <div id="analysisOutput" class="note" data-i18n="analysisOutputPlaceholder">Submit the form to preview a comprehensive symbolic analysis (cup patterns + birthday + horoscope + selected depth).</div>
+        <div id="fileAnalysisOutput" class="note" style="margin-top:10px;" data-i18n="fileAnalysisPlaceholder">Per-cup-file analysis appears here after submit.</div>
+        <div id="longReportOutput" class="note" style="margin-top:10px; max-height:320px; overflow:auto;" data-i18n="longReportPlaceholder">700-line comprehensive multi-perspective report appears here after submit.</div>
       </section>
 
       <div class="footer-actions">
@@ -271,7 +274,7 @@
         step3: 'Step 3: Preferences', language: 'Preferred language', category: 'Question category', tone: 'Tone', analysisDepth: 'Analysis depth', basic: 'Basic', medium: 'Medium', advanced: 'Advanced', deep: 'Deep',
         step4: 'Step 4: Consent', consent1: 'I accept the entertainment-only disclaimer.', consent2: 'I consent to privacy handling.',
         disclaimer: 'This standalone page demonstrates symbolic entertainment UX. It does not provide guaranteed outcomes or professional advice.',
-        analysisOutputTitle: 'Generated symbolic analysis', analysisOutputPlaceholder: 'Submit the form to preview a comprehensive symbolic analysis (cup patterns + birthday + horoscope + selected depth).', localNote: 'Runs locally in one HTML file — no server required for UI preview.', submit: 'Submit Reading'
+        analysisOutputTitle: 'Generated symbolic analysis', analysisOutputPlaceholder: 'Submit the form to preview a comprehensive symbolic analysis (cup patterns + birthday + horoscope + selected depth).', fileAnalysisPlaceholder: 'Per-cup-file analysis appears here after submit.', longReportPlaceholder: '700-line comprehensive multi-perspective report appears here after submit.', localNote: 'Runs locally in one HTML file — no server required for UI preview.', submit: 'Submit Reading'
       },
       ar: {
         brand: 'فنجان بلس — ملف HTML مستقل',
@@ -285,7 +288,7 @@
         step3: 'الخطوة 3: التفضيلات', language: 'اللغة المفضلة', category: 'فئة السؤال', tone: 'النبرة', analysisDepth: 'عمق التحليل', basic: 'أساسي', medium: 'متوسط', advanced: 'متقدم', deep: 'عميق',
         step4: 'الخطوة 4: الموافقات', consent1: 'أوافق على إخلاء المسؤولية الترفيهية فقط.', consent2: 'أوافق على سياسة الخصوصية.',
         disclaimer: 'هذه الصفحة المستقلة لعرض تجربة رمزية ترفيهية فقط ولا تقدم نتائج مضمونة أو نصائح مهنية.',
-        analysisOutputTitle: 'التحليل الرمزي الناتج', analysisOutputPlaceholder: 'أرسل النموذج لمعاينة تحليل رمزي شامل (أنماط الفنجان + تاريخ الميلاد + التوافق الفلكي + عمق التحليل).', localNote: 'يعمل محليًا في ملف HTML واحد دون الحاجة لخادم لعرض الواجهة.', submit: 'إرسال الطلب'
+        analysisOutputTitle: 'التحليل الرمزي الناتج', analysisOutputPlaceholder: 'أرسل النموذج لمعاينة تحليل رمزي شامل (أنماط الفنجان + تاريخ الميلاد + التوافق الفلكي + عمق التحليل).', fileAnalysisPlaceholder: 'سيظهر تحليل كل ملف فنجان هنا بعد الإرسال.', longReportPlaceholder: 'سيظهر هنا تقرير شامل من 700 سطر من زوايا متعددة بعد الإرسال.', localNote: 'يعمل محليًا في ملف HTML واحد دون الحاجة لخادم لعرض الواجهة.', submit: 'إرسال الطلب'
       }
     };
 
@@ -414,6 +417,8 @@
 
 
     const analysisOutput = document.getElementById('analysisOutput');
+    const fileAnalysisOutput = document.getElementById('fileAnalysisOutput');
+    const longReportOutput = document.getElementById('longReportOutput');
     const analysisDepthSelect = document.getElementById('analysisDepth');
 
     function zodiacFromDate(dateValue) {
@@ -452,7 +457,17 @@
       const birthInput = document.querySelector('input[type="date"]');
       const depth = analysisDepthSelect.value;
       const zodiac = zodiacFromDate(birthInput.value);
-      const symbols = state.files.length ? ['rising lines', 'central mark', 'branching roads', 'dense wall residue'].slice(0, Math.min(4, state.files.length + 1)) : ['smooth dome', 'path-like trails'];
+      const files = state.files.length ? state.files : [new File(['virtual'], 'virtual-cup-sample.jpg', { type: 'image/jpeg' })];
+      const cupFileAnalyses = files.map((file, idx) => {
+        const baseSymbols = ['rising lines', 'central mark', 'branching roads', 'dense wall residue', 'path-like trails'];
+        const symbols = baseSymbols.slice(0, Math.min(5, 3 + (idx % 3)));
+        const interpretation = state.lang === 'ar'
+          ? `الملف ${idx + 1} (${file.name}): رموز ${symbols.join('، ')} مرتبطة بخلفية برج ${zodiac} وتدل على فرصة تدريجية وتحدٍ قابل للإدارة.`
+          : `File ${idx + 1} (${file.name}): symbols ${symbols.join(', ')} aligned with ${zodiac} context indicate gradual opportunity and manageable challenge.`;
+        return { file: file.name, symbols, interpretation };
+      });
+
+      const symbols = cupFileAnalyses[0].symbols;
       const narrative = depthNarrative(depth, zodiac, symbols);
       const modeLabel = depth.charAt(0).toUpperCase() + depth.slice(1);
       const title = state.lang === 'ar' ? 'نتيجة التحليل' : 'Analysis result';
@@ -467,6 +482,24 @@
           <div class="analysis-block"><strong>${horoscopeLabel}:</strong> ${zodiac}</div>
           <div class="analysis-block"><strong>${patternLabel}:</strong> ${symbols.join(', ')}</div>
         </div>`;
+
+      fileAnalysisOutput.removeAttribute('data-i18n');
+      fileAnalysisOutput.innerHTML = `<strong>${state.lang === 'ar' ? 'تحليل الملفات:' : 'Per-file analysis:'}</strong><br>${cupFileAnalyses.map((i) => i.interpretation).join('<br>')}`;
+
+      const perspectives = ['personal','love','business','future','relationships','challenges','opportunities','timing','social dynamics','inner growth'];
+      const lines = [];
+      for (let i = 1; i <= 700; i += 1) {
+        const perspective = perspectives[(i - 1) % perspectives.length];
+        const fileInfo = cupFileAnalyses[(i - 1) % cupFileAnalyses.length];
+        const symbol = fileInfo.symbols[(i - 1) % fileInfo.symbols.length];
+        if (state.lang === 'ar') {
+          lines.push(`${i}. منظور ${perspective}: الرمز ${symbol} في الملف ${fileInfo.file} مع برج ${zodiac} وعمق ${depth} يشير إلى خطوة عملية وتوازن بين فرصة وتحدٍ.`);
+        } else {
+          lines.push(`${i}. ${perspective} perspective: symbol ${symbol} in file ${fileInfo.file} with ${zodiac} and ${depth} depth suggests action with opportunity-challenge balance.`);
+        }
+      }
+      longReportOutput.removeAttribute('data-i18n');
+      longReportOutput.innerHTML = `<strong>${state.lang === 'ar' ? 'تقرير شامل (700 سطر):' : 'Comprehensive report (700 lines):'}</strong><ol class="long-report">${lines.map((l) => `<li>${l}</li>`).join('')}</ol>`;
     }
 
     document.getElementById('wizard').addEventListener('submit', (e) => {
@@ -486,6 +519,12 @@
       if (!state.stream) setCamStatus(dictionary[lang].camOff);
       if (!analysisOutput.querySelector('.analysis-grid')) {
         analysisOutput.textContent = dictionary[lang].analysisOutputPlaceholder;
+      }
+      if (!fileAnalysisOutput.querySelector('strong')) {
+        fileAnalysisOutput.textContent = dictionary[lang].fileAnalysisPlaceholder;
+      }
+      if (!longReportOutput.querySelector('strong')) {
+        longReportOutput.textContent = dictionary[lang].longReportPlaceholder;
       }
     }
 

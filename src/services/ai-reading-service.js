@@ -1,6 +1,7 @@
 import { prisma } from '../config/prisma.js';
 
 const SYMBOL_LIBRARY = ['heavy base', 'smooth dome', 'central mark', 'rising lines', 'branching roads', 'dense wall residue', 'bird-like shapes', 'fish-like shapes', 'eye-like marks', 'circles', 'peaks', 'openings', 'drops', 'clustered dark areas', 'door-like spaces', 'path-like trails'];
+const PERSPECTIVES = ['personal', 'love', 'business', 'future', 'relationships', 'challenges', 'opportunities', 'timing', 'social dynamics', 'inner growth'];
 
 const DEPTH_DETAILS = {
   basic: { symbolCount: 4, style: 'concise symbolic summary' },
@@ -47,6 +48,42 @@ function buildDepthNarrative(depth, symbols, zodiac, language) {
   return map[depth];
 }
 
+function buildCupFileAnalyses(images, zodiac, language) {
+  const files = images?.length ? images : [{ filePath: 'virtual-cup-sample.jpg', isSaucer: false }];
+  return files.map((img, idx) => {
+    const symbols = randomSymbols(5);
+    if (language === 'ar') {
+      return {
+        file: img.filePath,
+        type: img.isSaucer ? 'saucer' : 'cup',
+        detected_symbols: symbols,
+        interpretation: `الملف ${idx + 1}: تظهر رموز (${symbols.join('، ')}) مع دلالة مرتبطة بخلفية برج ${zodiac} تشير إلى فرصة متدرجة وتحدٍّ قابل للإدارة.`
+      };
+    }
+    return {
+      file: img.filePath,
+      type: img.isSaucer ? 'saucer' : 'cup',
+      detected_symbols: symbols,
+      interpretation: `File ${idx + 1}: symbols (${symbols.join(', ')}) aligned with ${zodiac} context indicate gradual opportunity with manageable challenge.`
+    };
+  });
+}
+
+function buildComprehensiveLines({ language, zodiac, depth, cupFileAnalyses }) {
+  const lines = [];
+  for (let i = 1; i <= 700; i += 1) {
+    const perspective = PERSPECTIVES[(i - 1) % PERSPECTIVES.length];
+    const fileInsight = cupFileAnalyses[(i - 1) % cupFileAnalyses.length];
+    const symbol = fileInsight.detected_symbols[(i - 1) % fileInsight.detected_symbols.length];
+    if (language === 'ar') {
+      lines.push(`${i}. منظور ${perspective}: ظهور رمز ${symbol} في ${fileInsight.type} (${fileInsight.file}) مع مرجعية برج ${zodiac} وعمق ${depth} يوحي بخطوة عملية، مراجعة قرار، وموازنة بين فرصة وتحدٍ.`);
+    } else {
+      lines.push(`${i}. ${perspective} perspective: symbol ${symbol} in ${fileInsight.type} (${fileInsight.file}) with ${zodiac} framing and ${depth} depth suggests an actionable step, decision review, and opportunity-challenge balancing.`);
+    }
+  }
+  return lines;
+}
+
 export const aiReadingService = {
   async generate({ reading, language = 'ar' }) {
     const prompt = await prisma.promptTemplate.findFirst({ where: { language, isActive: true }, orderBy: { updatedAt: 'desc' } });
@@ -55,6 +92,8 @@ export const aiReadingService = {
     const detected = randomSymbols(depthCfg.symbolCount);
     const zodiac = zodiacFromBirthDate(reading.personalDetails?.birthDate);
     const depthNarrative = buildDepthNarrative(analysisDepth, detected, zodiac, language);
+    const cupFileAnalyses = buildCupFileAnalyses(reading.images, zodiac, language);
+    const comprehensiveReportLines = buildComprehensiveLines({ language, zodiac, depth: analysisDepth, cupFileAnalyses });
 
     const payload = {
       user_name: reading.personalDetails?.fullName || 'Guest',
@@ -66,6 +105,8 @@ export const aiReadingService = {
       analysis_depth: analysisDepth,
       analysis_depth_style: depthCfg.style,
       detected_symbols: detected,
+      cup_file_analyses: cupFileAnalyses,
+      comprehensive_report_lines: comprehensiveReportLines,
       summary: language === 'ar' ? 'تظهر إشارات تدريجية تدعم التأمل واتخاذ خطوات مدروسة.' : 'The cup suggests gradual momentum and reflective decision-making.',
       arabic_style_reading: language === 'ar' ? 'وجود خطوط صاعدة مع مركز واضح يدل على نضوج فكرة مهمة.' : 'Rising lines with a central mark suggest a mature idea taking shape.',
       oriental_style_reading: language === 'ar' ? 'تشير المسارات المتفرعة إلى خيارات متعددة تحتاج أولوية واضحة.' : 'Branching trails indicate multiple paths requiring clear prioritization.',
