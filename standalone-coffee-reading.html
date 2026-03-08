@@ -157,6 +157,8 @@
       font-size: .95rem;
     }
     .footer-actions { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap; }
+    .analysis-grid { display:grid; gap:.6rem; }
+    .analysis-block { background:#fff; border:1px solid #ead9c4; border-radius:10px; padding:.6rem; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -232,6 +234,7 @@
           <label><span data-i18n="language">Preferred language</span><select><option>Arabic</option><option>English</option></select></label>
           <label><span data-i18n="category">Question category</span><select><option>general</option><option>love</option><option>work</option><option>money</option><option>travel</option></select></label>
           <label><span data-i18n="tone">Tone</span><select><option>gentle</option><option>deep</option><option>practical</option><option>poetic</option></select></label>
+          <label><span data-i18n="analysisDepth">Analysis depth</span><select id="analysisDepth"><option value="basic" data-i18n="basic">Basic</option><option value="medium" selected data-i18n="medium">Medium</option><option value="advanced" data-i18n="advanced">Advanced</option><option value="deep" data-i18n="deep">Deep</option></select></label>
         </div>
       </fieldset>
 
@@ -241,6 +244,11 @@
         <label><input type="checkbox" required /> <span data-i18n="consent2">I consent to privacy handling.</span></label>
         <div class="note" data-i18n="disclaimer">This standalone page demonstrates symbolic entertainment UX. It does not provide guaranteed outcomes or professional advice.</div>
       </fieldset>
+
+      <section class="step">
+        <legend data-i18n="analysisOutputTitle">Generated symbolic analysis</legend>
+        <div id="analysisOutput" class="note" data-i18n="analysisOutputPlaceholder">Submit the form to preview a comprehensive symbolic analysis (cup patterns + birthday + horoscope + selected depth).</div>
+      </section>
 
       <div class="footer-actions">
         <small data-i18n="localNote">Runs locally in one HTML file — no server required for UI preview.</small>
@@ -260,10 +268,10 @@
         cameraTitle: 'Live camera capture', cameraBody: 'On iPhone/Android, grant camera permission then tap snapshot.',
         startCam: 'Start camera', switchCam: 'Switch camera', snapCam: 'Take snapshot', stopCam: 'Stop camera', camOff: 'Camera is off.',
         selected: 'Selected images', step2: 'Step 2: Personal details', fullName: 'Full name', birthDate: 'Birth date', gender: 'Gender (optional)', country: 'Country (optional)',
-        step3: 'Step 3: Preferences', language: 'Preferred language', category: 'Question category', tone: 'Tone',
+        step3: 'Step 3: Preferences', language: 'Preferred language', category: 'Question category', tone: 'Tone', analysisDepth: 'Analysis depth', basic: 'Basic', medium: 'Medium', advanced: 'Advanced', deep: 'Deep',
         step4: 'Step 4: Consent', consent1: 'I accept the entertainment-only disclaimer.', consent2: 'I consent to privacy handling.',
         disclaimer: 'This standalone page demonstrates symbolic entertainment UX. It does not provide guaranteed outcomes or professional advice.',
-        localNote: 'Runs locally in one HTML file — no server required for UI preview.', submit: 'Submit Reading'
+        analysisOutputTitle: 'Generated symbolic analysis', analysisOutputPlaceholder: 'Submit the form to preview a comprehensive symbolic analysis (cup patterns + birthday + horoscope + selected depth).', localNote: 'Runs locally in one HTML file — no server required for UI preview.', submit: 'Submit Reading'
       },
       ar: {
         brand: 'فنجان بلس — ملف HTML مستقل',
@@ -274,10 +282,10 @@
         cameraTitle: 'التقاط مباشر بالكاميرا', cameraBody: 'على iPhone أو Android، اسمح بالكاميرا ثم اضغط التقاط.',
         startCam: 'تشغيل الكاميرا', switchCam: 'تبديل الكاميرا', snapCam: 'التقاط صورة', stopCam: 'إيقاف الكاميرا', camOff: 'الكاميرا متوقفة.',
         selected: 'الصور المختارة', step2: 'الخطوة 2: البيانات الشخصية', fullName: 'الاسم الكامل', birthDate: 'تاريخ الميلاد', gender: 'الجنس (اختياري)', country: 'الدولة (اختياري)',
-        step3: 'الخطوة 3: التفضيلات', language: 'اللغة المفضلة', category: 'فئة السؤال', tone: 'النبرة',
+        step3: 'الخطوة 3: التفضيلات', language: 'اللغة المفضلة', category: 'فئة السؤال', tone: 'النبرة', analysisDepth: 'عمق التحليل', basic: 'أساسي', medium: 'متوسط', advanced: 'متقدم', deep: 'عميق',
         step4: 'الخطوة 4: الموافقات', consent1: 'أوافق على إخلاء المسؤولية الترفيهية فقط.', consent2: 'أوافق على سياسة الخصوصية.',
         disclaimer: 'هذه الصفحة المستقلة لعرض تجربة رمزية ترفيهية فقط ولا تقدم نتائج مضمونة أو نصائح مهنية.',
-        localNote: 'يعمل محليًا في ملف HTML واحد دون الحاجة لخادم لعرض الواجهة.', submit: 'إرسال الطلب'
+        analysisOutputTitle: 'التحليل الرمزي الناتج', analysisOutputPlaceholder: 'أرسل النموذج لمعاينة تحليل رمزي شامل (أنماط الفنجان + تاريخ الميلاد + التوافق الفلكي + عمق التحليل).', localNote: 'يعمل محليًا في ملف HTML واحد دون الحاجة لخادم لعرض الواجهة.', submit: 'إرسال الطلب'
       }
     };
 
@@ -404,9 +412,66 @@
     snapCam.addEventListener('click', snapshot);
     stopCam.addEventListener('click', stopCamera);
 
+
+    const analysisOutput = document.getElementById('analysisOutput');
+    const analysisDepthSelect = document.getElementById('analysisDepth');
+
+    function zodiacFromDate(dateValue) {
+      const d = new Date(dateValue);
+      if (Number.isNaN(d.getTime())) return state.lang === 'ar' ? 'غير محدد' : 'Unknown';
+      const m = d.getUTCMonth() + 1;
+      const day = d.getUTCDate();
+      const data = [
+        ['Capricorn', 1, 19], ['Aquarius', 2, 18], ['Pisces', 3, 20], ['Aries', 4, 19], ['Taurus', 5, 20],
+        ['Gemini', 6, 20], ['Cancer', 7, 22], ['Leo', 8, 22], ['Virgo', 9, 22], ['Libra', 10, 22],
+        ['Scorpio', 11, 21], ['Sagittarius', 12, 21], ['Capricorn', 12, 31]
+      ];
+      const match = data.find(([, sm, sd], i) => (m < sm || (m === sm && day <= sd)) && i > 0);
+      return match ? data[data.indexOf(match) - 1][0] : 'Capricorn';
+    }
+
+    function depthNarrative(depth, zodiac, symbols) {
+      const s = symbols.join(', ');
+      if (state.lang === 'ar') {
+        return {
+          basic: `تحليل أساسي: الرموز الأقوى (${s}) تعطي اتجاهًا عامًا متوازنًا.`,
+          medium: `تحليل متوسط: ارتباط الرموز (${s}) مع برج ${zodiac} يظهر قرارات تدريجية أكثر وضوحًا.`,
+          advanced: `تحليل متقدم: قراءة متعددة الطبقات للرموز (${s}) مع تاريخ الميلاد تكشف فرصًا دقيقة للحب والعمل والمال.`,
+          deep: `تحليل عميق: دمج كامل للرموز (${s}) مع الخلفية الفلكية (${zodiac}) يبرز التأثيرات الخفية والتوقيت الحساس والمسارات البديلة.`
+        }[depth];
+      }
+      return {
+        basic: `Basic analysis: dominant symbols (${s}) point to a balanced general direction.`,
+        medium: `Medium analysis: the symbols (${s}) aligned with ${zodiac} suggest clearer phased decisions.`,
+        advanced: `Advanced analysis: multi-layer interpretation of (${s}) with birth-date framing reveals nuanced love/work/money opportunities.`,
+        deep: `Deep analysis: full symbolic synthesis (${s}) plus zodiac context (${zodiac}) highlights hidden influences, sensitive timing, and alternative paths.`
+      }[depth];
+    }
+
+    function buildAnalysisOutput() {
+      const birthInput = document.querySelector('input[type="date"]');
+      const depth = analysisDepthSelect.value;
+      const zodiac = zodiacFromDate(birthInput.value);
+      const symbols = state.files.length ? ['rising lines', 'central mark', 'branching roads', 'dense wall residue'].slice(0, Math.min(4, state.files.length + 1)) : ['smooth dome', 'path-like trails'];
+      const narrative = depthNarrative(depth, zodiac, symbols);
+      const modeLabel = depth.charAt(0).toUpperCase() + depth.slice(1);
+      const title = state.lang === 'ar' ? 'نتيجة التحليل' : 'Analysis result';
+      const horoscopeLabel = state.lang === 'ar' ? 'الإطار الفلكي' : 'Horoscope framing';
+      const patternLabel = state.lang === 'ar' ? 'أنماط الفنجان المرصودة' : 'Detected cup patterns';
+      const depthLabel = state.lang === 'ar' ? 'مستوى التحليل' : 'Analysis depth';
+      analysisOutput.removeAttribute('data-i18n');
+      analysisOutput.innerHTML = `
+        <div class="analysis-grid">
+          <div class="analysis-block"><strong>${title}</strong><div>${narrative}</div></div>
+          <div class="analysis-block"><strong>${depthLabel}:</strong> ${modeLabel}</div>
+          <div class="analysis-block"><strong>${horoscopeLabel}:</strong> ${zodiac}</div>
+          <div class="analysis-block"><strong>${patternLabel}:</strong> ${symbols.join(', ')}</div>
+        </div>`;
+    }
+
     document.getElementById('wizard').addEventListener('submit', (e) => {
       e.preventDefault();
-      alert(state.lang === 'ar' ? 'تم إرسال النموذج (عرض تجريبي محلي).' : 'Form submitted (local standalone demo).');
+      buildAnalysisOutput();
     });
 
     function applyLanguage(lang) {
@@ -419,6 +484,9 @@
         if (dictionary[lang][key]) el.textContent = dictionary[lang][key];
       });
       if (!state.stream) setCamStatus(dictionary[lang].camOff);
+      if (!analysisOutput.querySelector('.analysis-grid')) {
+        analysisOutput.textContent = dictionary[lang].analysisOutputPlaceholder;
+      }
     }
 
     document.querySelectorAll('.lang button').forEach((btn) => btn.addEventListener('click', () => applyLanguage(btn.dataset.lang)));

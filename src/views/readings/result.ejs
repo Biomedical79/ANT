@@ -7,10 +7,12 @@
   <% } else { const p = reading.result.payload; %>
     <h2>Summary</h2><p><%= p.summary %></p>
     <h3>Detected Symbols</h3><ul><% p.detected_symbols.forEach(s => { %><li><%= s %></li><% }) %></ul>
+    <h3>Analysis Depth</h3><p><strong><%= p.analysis_depth %></strong> — <%= p.analysis_depth_style %></p>
+    <h3>Depth Interpretation</h3><p><%= p.depth_interpretation %></p>
     <h3>Arabic Style</h3><p><%= p.arabic_style_reading %></p>
     <h3>Oriental Style</h3><p><%= p.oriental_style_reading %></p>
     <h3>Tarot Overlay</h3><p><%= p.tarot_overlay %></p>
-    <h3>Horoscope Overlay</h3><p><%= p.horoscope_overlay %></p>
+    <h3>Horoscope Overlay</h3><p><%= p.horoscope_overlay %></p><p><strong>Zodiac:</strong> <%= p.zodiac_sign %></p>
     <h3>Love / Work / Money / Travel</h3><p><%= p.love %></p><p><%= p.work %></p><p><%= p.money %></p><p><%= p.travel %></p>
     <h3>Hidden Influences</h3><p><%= p.hidden_influences %></p>
     <h3>Timing</h3><p><%= p.timing %></p>

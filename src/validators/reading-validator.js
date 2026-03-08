@@ -6,6 +6,7 @@ export const readingDraftSchema = z.object({
   questionCategory: z.enum(['love', 'work', 'money', 'travel', 'family', 'general']),
   selectedModes: z.array(z.enum(['arabic', 'oriental', 'tarot', 'horoscope'])).min(1),
   tone: z.enum(['gentle', 'deep', 'practical', 'poetic']),
+  analysisDepth: z.enum(['basic', 'medium', 'advanced', 'deep']).default('medium'),
   personalDetails: z.object({
     fullName: z.string().min(2),
     birthDate: z.string(),

@@ -2,7 +2,7 @@ import { readingRepository } from '../repositories/reading-repository.js';
 import { aiReadingService } from './ai-reading-service.js';
 
 export const readingService = {
-  async createDraft({ userId, guestEmail, language, questionCategory, selectedModes, tone, personalDetails }) {
+  async createDraft({ userId, guestEmail, language, questionCategory, selectedModes, tone, analysisDepth = 'medium', personalDetails }) {
     return readingRepository.create({
       userId,
       guestEmail,
@@ -10,7 +10,7 @@ export const readingService = {
       questionCategory,
       selectedModes,
       tone,
-      personalDetails,
+      personalDetails: { ...personalDetails, analysisDepth },
       status: 'QUEUED'
     });
   },
