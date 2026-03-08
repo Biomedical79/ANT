@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finjan Plus — Standalone Coffee Reading Wizard</title>
+  <meta name="description" content="Standalone AI coffee cup symbolic reading wizard with smartphone camera capture and gallery upload." />
+  <style>
+    :root {
+      --coffee-950: #1f1410;
+      --coffee-850: #312018;
+      --coffee-700: #5a3b2f;
+      --ivory: #f8f4ec;
+      --cream: #fffdf8;
+      --gold: #d4af37;
+      --copper: #b87333;
+      --text: #201b17;
+      --ok: #1f8a4c;
+      --danger: #a03030;
+      --shadow: 0 8px 30px rgba(24, 14, 8, 0.12);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Tahoma, sans-serif;
+      background: radial-gradient(circle at top right, #fff7dd, var(--ivory) 38%, #f1e8dd);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container { width: min(1080px, 92%); margin-inline: auto; }
+    .topbar {
+      background: linear-gradient(130deg, var(--coffee-950), var(--coffee-850));
+      color: #fff;
+      padding: 14px 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar .inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .brand { font-weight: 800; letter-spacing: .2px; }
+    .lang {
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 999px;
+      overflow: hidden;
+      display: inline-flex;
+    }
+    .lang button {
+      border: 0;
+      color: #fff;
+      background: transparent;
+      padding: .5rem .8rem;
+      cursor: pointer;
+    }
+    .lang button.active { background: rgba(255,255,255,.18); }
+    main { padding: 24px 0 44px; }
+    .hero {
+      background: linear-gradient(130deg, rgba(255,255,255,.84), rgba(255,248,230,.82));
+      border: 1px solid #ead9c4;
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(1.3rem, 2.8vw, 2rem); }
+    .muted { margin: 0; opacity: .9; }
+    .wizard {
+      display: grid;
+      gap: 14px;
+    }
+    .step {
+      background: var(--cream);
+      border: 1px solid #e5d4be;
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .step legend {
+      font-weight: 800;
+      padding: 0 .5rem;
+    }
+    .grid-2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+    .card {
+      border: 1px solid #ead9c4;
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: .65rem;
+    }
+    label { display: grid; gap: .35rem; font-weight: 650; }
+    input, select, textarea, button {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid #ccb698;
+      padding: .58rem .7rem;
+      background: #fff;
+    }
+    .btn {
+      border: 0;
+      background: linear-gradient(130deg, var(--copper), var(--gold));
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn.alt {
+      background: #fff;
+      color: var(--coffee-700);
+      border: 1px solid var(--coffee-700);
+    }
+    .toolbar { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .dropzone {
+      border: 2px dashed #bf8f64;
+      padding: .9rem;
+      text-align: center;
+      border-radius: 12px;
+      background: #fffaf3;
+    }
+    .dropzone.active { background: #fff2d8; }
+    .camera {
+      width: 100%;
+      min-height: 220px;
+      border-radius: 12px;
+      border: 1px solid #5f4434;
+      background: #1f1713;
+      object-fit: cover;
+    }
+    .small { margin: 0; font-size: .93rem; opacity: .9; }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--danger); }
+    .preview-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: .55rem;
+    }
+    .preview-item {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      border: 1px solid #ead9c4;
+      border-radius: 12px;
+      padding: .45rem;
+      background: #fff;
+    }
+    .preview-item img { width: 54px; height: 54px; object-fit: cover; border-radius: 10px; }
+    .preview-item .meta { flex: 1; }
+    .mini { padding: .35rem .52rem; border-radius: 8px; background: #fff; cursor: pointer; }
+    .actions { display: flex; gap: .45rem; flex-wrap: wrap; }
+    .note {
+      background: #fff4d8;
+      border: 1px solid #ecd9a6;
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      padding: .65rem .72rem;
+      font-size: .95rem;
+    }
+    .footer-actions { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container inner">
+      <div class="brand" data-i18n="brand">Finjan Plus — Standalone Wizard</div>
+      <div class="lang" role="group" aria-label="Language switcher">
+        <button type="button" class="active" data-lang="en">EN</button>
+        <button type="button" data-lang="ar">AR</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1 data-i18n="heroTitle">Coffee Cup Reading — Upload or Capture Live</h1>
+      <p class="muted" data-i18n="heroBody">Standalone HTML page: works on desktop and mobile. Use gallery upload, drag/drop, or direct smartphone camera snapshots.</p>
+    </section>
+
+    <form class="wizard" id="wizard" novalidate>
+      <fieldset class="step">
+        <legend data-i18n="step1">Step 1: Images</legend>
+        <div class="grid-2">
+          <section class="card">
+            <h2 style="margin:0" data-i18n="galleryTitle">Upload from gallery</h2>
+            <p class="small" data-i18n="galleryBody">Select up to 4 images (cup interior + optional saucer), max 10MB each.</p>
+            <label>
+              <span data-i18n="selectImages">Select images</span>
+              <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple />
+            </label>
+            <div id="dropzone" class="dropzone" data-i18n="dropzone">Drag and drop images here</div>
+            <label>
+              <span data-i18n="mobileFallback">Quick mobile capture fallback</span>
+              <input id="captureInput" type="file" accept="image/*" capture="environment" />
+            </label>
+          </section>
+
+          <section class="card">
+            <h2 style="margin:0" data-i18n="cameraTitle">Live camera capture</h2>
+            <p class="small" data-i18n="cameraBody">On iPhone/Android, grant camera permission then tap snapshot.</p>
+            <div class="toolbar">
+              <button type="button" class="btn alt" id="startCam" data-i18n="startCam">Start camera</button>
+              <button type="button" class="btn alt" id="switchCam" disabled data-i18n="switchCam">Switch camera</button>
+              <button type="button" class="btn" id="snapCam" disabled data-i18n="snapCam">Take snapshot</button>
+              <button type="button" class="btn alt" id="stopCam" disabled data-i18n="stopCam">Stop camera</button>
+            </div>
+            <video id="video" class="camera" playsinline muted></video>
+            <canvas id="canvas" class="hidden"></canvas>
+            <p id="camStatus" class="small status" data-i18n="camOff">Camera is off.</p>
+          </section>
+        </div>
+
+        <section class="card" style="margin-top:12px;">
+          <h3 style="margin:0" data-i18n="selected">Selected images</h3>
+          <ul id="previewList" class="preview-list" aria-live="polite"></ul>
+        </section>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend data-i18n="step2">Step 2: Personal details</legend>
+        <div class="grid-2">
+          <label><span data-i18n="fullName">Full name</span><input required /></label>
+          <label><span data-i18n="birthDate">Birth date</span><input type="date" required /></label>
+          <label><span data-i18n="gender">Gender (optional)</span><input /></label>
+          <label><span data-i18n="country">Country (optional)</span><input /></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend data-i18n="step3">Step 3: Preferences</legend>
+        <div class="grid-2">
+          <label><span data-i18n="language">Preferred language</span><select><option>Arabic</option><option>English</option></select></label>
+          <label><span data-i18n="category">Question category</span><select><option>general</option><option>love</option><option>work</option><option>money</option><option>travel</option></select></label>
+          <label><span data-i18n="tone">Tone</span><select><option>gentle</option><option>deep</option><option>practical</option><option>poetic</option></select></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend data-i18n="step4">Step 4: Consent</legend>
+        <label><input type="checkbox" required /> <span data-i18n="consent1">I accept the entertainment-only disclaimer.</span></label>
+        <label><input type="checkbox" required /> <span data-i18n="consent2">I consent to privacy handling.</span></label>
+        <div class="note" data-i18n="disclaimer">This standalone page demonstrates symbolic entertainment UX. It does not provide guaranteed outcomes or professional advice.</div>
+      </fieldset>
+
+      <div class="footer-actions">
+        <small data-i18n="localNote">Runs locally in one HTML file — no server required for UI preview.</small>
+        <button class="btn" type="submit" data-i18n="submit">Submit Reading</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const dictionary = {
+      en: {
+        brand: 'Finjan Plus — Standalone Wizard',
+        heroTitle: 'Coffee Cup Reading — Upload or Capture Live',
+        heroBody: 'Standalone HTML page: works on desktop and mobile. Use gallery upload, drag/drop, or direct smartphone camera snapshots.',
+        step1: 'Step 1: Images', galleryTitle: 'Upload from gallery', galleryBody: 'Select up to 4 images (cup interior + optional saucer), max 10MB each.',
+        selectImages: 'Select images', dropzone: 'Drag and drop images here', mobileFallback: 'Quick mobile capture fallback',
+        cameraTitle: 'Live camera capture', cameraBody: 'On iPhone/Android, grant camera permission then tap snapshot.',
+        startCam: 'Start camera', switchCam: 'Switch camera', snapCam: 'Take snapshot', stopCam: 'Stop camera', camOff: 'Camera is off.',
+        selected: 'Selected images', step2: 'Step 2: Personal details', fullName: 'Full name', birthDate: 'Birth date', gender: 'Gender (optional)', country: 'Country (optional)',
+        step3: 'Step 3: Preferences', language: 'Preferred language', category: 'Question category', tone: 'Tone',
+        step4: 'Step 4: Consent', consent1: 'I accept the entertainment-only disclaimer.', consent2: 'I consent to privacy handling.',
+        disclaimer: 'This standalone page demonstrates symbolic entertainment UX. It does not provide guaranteed outcomes or professional advice.',
+        localNote: 'Runs locally in one HTML file — no server required for UI preview.', submit: 'Submit Reading'
+      },
+      ar: {
+        brand: 'فنجان بلس — ملف HTML مستقل',
+        heroTitle: 'قراءة الفنجان — رفع الصور أو الالتقاط المباشر',
+        heroBody: 'صفحة HTML مستقلة تعمل على الهاتف والكمبيوتر. يمكنك الرفع من المعرض أو السحب والإفلات أو الالتقاط المباشر بالكاميرا.',
+        step1: 'الخطوة 1: الصور', galleryTitle: 'الرفع من المعرض', galleryBody: 'اختر حتى 4 صور (داخل الفنجان + الصحن اختياريًا) بحد أقصى 10MB لكل صورة.',
+        selectImages: 'اختر الصور', dropzone: 'اسحب الصور وأفلتها هنا', mobileFallback: 'خيار سريع لالتقاط صورة من الهاتف',
+        cameraTitle: 'التقاط مباشر بالكاميرا', cameraBody: 'على iPhone أو Android، اسمح بالكاميرا ثم اضغط التقاط.',
+        startCam: 'تشغيل الكاميرا', switchCam: 'تبديل الكاميرا', snapCam: 'التقاط صورة', stopCam: 'إيقاف الكاميرا', camOff: 'الكاميرا متوقفة.',
+        selected: 'الصور المختارة', step2: 'الخطوة 2: البيانات الشخصية', fullName: 'الاسم الكامل', birthDate: 'تاريخ الميلاد', gender: 'الجنس (اختياري)', country: 'الدولة (اختياري)',
+        step3: 'الخطوة 3: التفضيلات', language: 'اللغة المفضلة', category: 'فئة السؤال', tone: 'النبرة',
+        step4: 'الخطوة 4: الموافقات', consent1: 'أوافق على إخلاء المسؤولية الترفيهية فقط.', consent2: 'أوافق على سياسة الخصوصية.',
+        disclaimer: 'هذه الصفحة المستقلة لعرض تجربة رمزية ترفيهية فقط ولا تقدم نتائج مضمونة أو نصائح مهنية.',
+        localNote: 'يعمل محليًا في ملف HTML واحد دون الحاجة لخادم لعرض الواجهة.', submit: 'إرسال الطلب'
+      }
+    };
+
+    const state = { files: [], stream: null, facingMode: 'environment', lang: 'en' };
+
+    const fileInput = document.getElementById('fileInput');
+    const captureInput = document.getElementById('captureInput');
+    const dropzone = document.getElementById('dropzone');
+    const previewList = document.getElementById('previewList');
+
+    const startCam = document.getElementById('startCam');
+    const switchCam = document.getElementById('switchCam');
+    const snapCam = document.getElementById('snapCam');
+    const stopCam = document.getElementById('stopCam');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const camStatus = document.getElementById('camStatus');
+
+    function setCamStatus(text, kind = '') {
+      camStatus.textContent = text;
+      camStatus.classList.remove('ok', 'err');
+      if (kind) camStatus.classList.add(kind);
+    }
+
+    function syncInput() {
+      const dt = new DataTransfer();
+      state.files.forEach((f) => dt.items.add(f));
+      fileInput.files = dt.files;
+    }
+
+    function renderList() {
+      previewList.innerHTML = '';
+      state.files.forEach((file, i) => {
+        const li = document.createElement('li');
+        li.className = 'preview-item';
+
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.alt = `image ${i + 1}`;
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = `<strong>${file.name}</strong><div>${(file.size / 1024 / 1024).toFixed(2)} MB</div>`;
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const up = document.createElement('button'); up.type = 'button'; up.className = 'mini'; up.textContent = '↑';
+        up.onclick = () => { if (i === 0) return; [state.files[i - 1], state.files[i]] = [state.files[i], state.files[i - 1]]; syncInput(); renderList(); };
+
+        const down = document.createElement('button'); down.type = 'button'; down.className = 'mini'; down.textContent = '↓';
+        down.onclick = () => { if (i === state.files.length - 1) return; [state.files[i + 1], state.files[i]] = [state.files[i], state.files[i + 1]]; syncInput(); renderList(); };
+
+        const del = document.createElement('button'); del.type = 'button'; del.className = 'mini'; del.textContent = '✕';
+        del.onclick = () => { state.files.splice(i, 1); syncInput(); renderList(); };
+
+        actions.append(up, down, del);
+        li.append(img, meta, actions);
+        previewList.append(li);
+      });
+    }
+
+    function addFiles(inputFiles) {
+      const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+      const incoming = [...inputFiles];
+      for (const file of incoming) {
+        if (!allowed.includes(file.type)) continue;
+        if (file.size > 10 * 1024 * 1024) continue;
+        if (state.files.length >= 4) break;
+        state.files.push(file);
+      }
+      syncInput();
+      renderList();
+    }
+
+    fileInput.addEventListener('change', () => addFiles(fileInput.files));
+    captureInput.addEventListener('change', () => addFiles(captureInput.files));
+
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('active'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
+    dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('active'); addFiles(e.dataTransfer.files); });
+
+    async function startCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCamStatus('Camera API unavailable. Use fallback capture input.', 'err');
+        return;
+      }
+      try {
+        if (state.stream) state.stream.getTracks().forEach((t) => t.stop());
+        state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: state.facingMode }, audio: false });
+        video.srcObject = state.stream;
+        await video.play();
+        startCam.disabled = true; switchCam.disabled = false; snapCam.disabled = false; stopCam.disabled = false;
+        setCamStatus(state.facingMode === 'environment' ? 'Rear camera active.' : 'Front camera active.', 'ok');
+      } catch (err) {
+        setCamStatus('Unable to access camera. Check browser permissions.', 'err');
+      }
+    }
+
+    function stopCamera() {
+      if (state.stream) state.stream.getTracks().forEach((t) => t.stop());
+      state.stream = null;
+      video.srcObject = null;
+      startCam.disabled = false; switchCam.disabled = true; snapCam.disabled = true; stopCam.disabled = true;
+      setCamStatus(dictionary[state.lang].camOff);
+    }
+
+    function snapshot() {
+      if (!state.stream || !video.videoWidth || !video.videoHeight) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const f = new File([blob], `snapshot-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        addFiles([f]);
+        setCamStatus('Snapshot added.', 'ok');
+      }, 'image/jpeg', 0.92);
+    }
+
+    startCam.addEventListener('click', startCamera);
+    switchCam.addEventListener('click', async () => { state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment'; await startCamera(); });
+    snapCam.addEventListener('click', snapshot);
+    stopCam.addEventListener('click', stopCamera);
+
+    document.getElementById('wizard').addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert(state.lang === 'ar' ? 'تم إرسال النموذج (عرض تجريبي محلي).' : 'Form submitted (local standalone demo).');
+    });
+
+    function applyLanguage(lang) {
+      state.lang = lang;
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('.lang button').forEach((btn) => btn.classList.toggle('active', btn.dataset.lang === lang));
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.dataset.i18n;
+        if (dictionary[lang][key]) el.textContent = dictionary[lang][key];
+      });
+      if (!state.stream) setCamStatus(dictionary[lang].camOff);
+    }
+
+    document.querySelectorAll('.lang button').forEach((btn) => btn.addEventListener('click', () => applyLanguage(btn.dataset.lang)));
+    applyLanguage('en');
+  </script>
+</body>
+</html>
