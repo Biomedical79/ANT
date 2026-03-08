@@ -1,0 +1,4 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container"><h1>Reading Management</h1><table><tr><th>ID</th><th>User</th><th>Status</th></tr><% readings.forEach(r => { %><tr><td><%= r.id %></td><td><%= r.user?.email || r.guestEmail %></td><td><%= r.status %></td></tr><% }) %></table></main>
+<%- include('../partials/footer') %>

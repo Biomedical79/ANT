@@ -1,0 +1,4 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container"><h1>Prompt Templates</h1><% prompts.forEach(p => { %><article class="card"><h3><%= p.key %></h3><p><%= p.templateBody %></p></article><% }) %></main>
+<%- include('../partials/footer') %>

@@ -1,0 +1,13 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container auth-card">
+  <h1>Login</h1>
+  <form method="post" action="/auth/login">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Email<input name="email" type="email" required /></label>
+    <label>Password<input name="password" type="password" required minlength="8" /></label>
+    <button class="btn" type="submit">Login</button>
+  </form>
+  <a href="/auth/forgot-password">Forgot password</a>
+</main>
+<%- include('../partials/footer') %>

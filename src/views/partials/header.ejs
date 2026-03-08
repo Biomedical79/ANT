@@ -1,0 +1,22 @@
+<header class="site-header">
+  <nav class="container nav">
+    <a href="/" class="brand"><%= t.brand %></a>
+    <ul>
+      <li><a href="/"><%= t.home %></a></li>
+      <li><a href="/how-it-works"><%= t.howItWorks %></a></li>
+      <li><a href="/pricing"><%= t.pricing %></a></li>
+      <li><a href="/faq"><%= t.faq %></a></li>
+      <li><a href="/blog"><%= t.blog %></a></li>
+      <% if (user) { %>
+      <li><a href="/dashboard"><%= t.dashboard %></a></li>
+      <li>
+        <form action="/auth/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="link-btn"><%= t.logout %></button></form>
+      </li>
+      <% } else { %>
+      <li><a href="/auth/login"><%= t.login %></a></li>
+      <li><a href="/auth/register" class="btn btn-sm"><%= t.register %></a></li>
+      <% } %>
+      <li><a href="?lang=ar">AR</a> | <a href="?lang=en">EN</a></li>
+    </ul>
+  </nav>
+</header>

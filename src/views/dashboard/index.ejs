@@ -1,0 +1,14 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container">
+  <h1>Welcome, <%= summary.profile?.fullName || user.email %></h1>
+  <a class="btn" href="/readings/new">New Reading</a>
+  <section class="cards">
+    <article class="card"><h3>Readings</h3><p><%= summary.readings.length %> recent</p></article>
+    <article class="card"><h3>Subscription</h3><p><%= summary.subscriptions[0]?.plan?.name || 'No active subscription' %></p></article>
+    <article class="card"><h3>Notifications</h3><p><%= summary.notifications.length %></p></article>
+  </section>
+  <h2>History</h2>
+  <ul><% summary.readings.forEach(r => { %><li><a href="/readings/<%= r.id %>/result"><%= r.questionCategory %> - <%= r.status %></a></li><% }) %></ul>
+</main>
+<%- include('../partials/footer') %>

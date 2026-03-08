@@ -1,0 +1,39 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main class="container prose">
+  <h1>Reading Result</h1>
+  <% if (!reading.result) { %>
+  <p>Result not ready yet.</p>
+  <% } else { const p = reading.result.payload; %>
+    <h2>Summary</h2><p><%= p.summary %></p>
+    <h3>Detected Symbols</h3><ul><% p.detected_symbols.forEach(s => { %><li><%= s %></li><% }) %></ul>
+    <h3>Analysis Depth</h3><p><strong><%= p.analysis_depth %></strong> — <%= p.analysis_depth_style %></p>
+    <h3>Depth Interpretation</h3><p><%= p.depth_interpretation %></p>
+    <h3>Cup File Pattern Analysis</h3>
+    <div class="cards">
+      <% (p.cup_file_analyses || []).forEach(item => { %>
+      <article class="card">
+        <h4><%= item.file %> (<%= item.type %>)</h4>
+        <p><strong>Symbols:</strong> <%= item.detected_symbols.join(', ') %></p>
+        <p><%= item.interpretation %></p>
+      </article>
+      <% }) %>
+    </div>
+    <h3>Arabic Style</h3><p><%= p.arabic_style_reading %></p>
+    <h3>Oriental Style</h3><p><%= p.oriental_style_reading %></p>
+    <h3>Tarot Overlay</h3><p><%= p.tarot_overlay %></p>
+    <h3>Horoscope Overlay</h3><p><%= p.horoscope_overlay %></p><p><strong>Zodiac:</strong> <%= p.zodiac_sign %></p>
+    <h3>Love / Work / Money / Travel</h3><p><%= p.love %></p><p><%= p.work %></p><p><%= p.money %></p><p><%= p.travel %></p>
+    <h3>Hidden Influences</h3><p><%= p.hidden_influences %></p>
+    <h3>Timing</h3><p><%= p.timing %></p>
+    <h3>Comprehensive 700-Line Analysis</h3>
+    <ol class="report-lines">
+      <% (p.comprehensive_report_lines || []).forEach(line => { %>
+        <li><%= line %></li>
+      <% }) %>
+    </ol>
+    <h3>Final Message</h3><p><%= p.final_message %></p>
+    <p class="notice"><%= p.disclaimer %></p>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>

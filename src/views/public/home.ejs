@@ -1,0 +1,30 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<main>
+  <section class="hero container">
+    <h1>Premium AI Coffee Cup Reading</h1>
+    <p>Arabic-first symbolic entertainment readings with elegant bilingual reports.</p>
+    <a class="btn" href="/auth/register"><%= t.cta %></a>
+    <a class="btn btn-outline" href="/how-it-works">Learn more</a>
+  </section>
+  <section class="container cards">
+    <article class="card"><h3>Sample Preview</h3><p>Detected: rising lines, central mark, branching roads.</p></article>
+    <article class="card"><h3>Trust Signals</h3><p>Secure checkout, privacy controls, role-based admin audit logs.</p></article>
+    <article class="card"><h3>Entertainment Disclaimer</h3><p>No guaranteed outcomes. Symbolic guidance only.</p></article>
+  </section>
+  <section class="container">
+    <h2>Pricing</h2>
+    <div class="cards">
+      <% plans.forEach(plan => { %><article class="card"><h3><%= plan.name %></h3><p>$<%= (plan.priceCents/100).toFixed(2) %></p></article><% }) %>
+    </div>
+  </section>
+  <section class="container">
+    <h2>Testimonials</h2>
+    <% testimonials.forEach(item => { %><blockquote class="card">“<%= item.quote %>” — <%= item.author %></blockquote><% }) %>
+  </section>
+  <section class="container">
+    <h2>FAQ</h2>
+    <% faqs.forEach(f => { %><details><summary><%= f.q %></summary><p><%= f.a %></p></details><% }) %>
+  </section>
+</main>
+<%- include('../partials/footer') %>
